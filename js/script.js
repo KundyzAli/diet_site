@@ -158,9 +158,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
    });
 
-   const modalTimerId = setTimeout(openModal, 5000);// всплытие модального окна через определенный промежуток времени
+  //  const modalTimerId = setTimeout(openModal, 5000);// всплытие модального окна через определенный промежуток времени
 
-   function showModalByScroll() {
+   function showModalByScroll() { // всплытие модального окна тогда когда пользователь долистает до конца
     if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight -1) {
       openModal();
       window.removeEventListener('scroll', showModalByScroll); // мы прописываем чтобы модальное окно при скролле открывалось только 1 раз для пользователя
@@ -168,4 +168,86 @@ window.addEventListener('DOMContentLoaded', () => {
    }
 
    window.addEventListener('scroll', showModalByScroll);
+
+
+
+   //используем классы для карточек
+
+   class MenuCard {
+    constructor(src, alt, title, descr, price, parentSelector) {
+      this.src = src;
+      this.alt = alt;
+      this.title = title;
+      this.descr = descr;
+      this.price = price;
+      this.parent = document.querySelector(parentSelector); //здесь лежит дом-эл-т,(родитель куда помещается конструкция созданная в render)
+      this.transfer = 27;
+      this.changeToUAH(); // метод  changeToUAH можем вызывать в методе кот-й будет что-то помещать на страницу либо прямо в конструкторе
+    }
+    // в будущей базе данных если цена записывается в $ ее надо конвертировать в местную валюту 
+    changeToUAH() { //метод конвертации валют
+      this.price = this.price * this.transfer;
+    }
+
+    render() { // метод чтобы сформировать верстку
+      // метод  changeToUAH можем вызывать в методе кот-й будет что-то помещать на страницу либо прямо в конструкторе
+      //создаем эл-т поместим в нее верстку, эту верстку дополним теми данными кот-е приходят,как аргументы и поместить этот эл-т уже на страницу
+      const element = document.createElement('div');
+      // методом render() будем создавать структуру  кот-й помещается в определенный div
+      element.innerHTML = `
+        <div class="menu__item">
+            <img src=${this.src} alt=${this.alt}>
+            <h3 class="menu__item-subtitle">${this.title}</h3>
+            <div class="menu__item-descr">${this.descr}</div>
+            <div class="menu__item-divider"></div>
+            <div class="menu__item-price">
+                <div class="menu__item-cost">Цена:</div>
+                <div class="menu__item-total"><span>${this.price}</span> грн/день</div>
+            </div>
+        </div>  
+      `;
+      this.parent.append(element); // мы добавляем нов.созд.эл-т родителю
+    }
+   }
+
+  //  #1
+  //  const div = new MenuCard();
+  //  div.render();
+
+  // #2
+  new MenuCard(
+    "img/tabs/vegy.jpg",
+    "vegy",
+    'Меню "Фитнес"',
+    'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
+    9,
+    '.menu .container'
+  ).render(); 
+  //здесь создаем нов. объект и сразу же вызываем на нем метод render(он что-то отработает, и исчезнет)
+  // объект может сущ. и без переменной, можем ее никуда не ложить.
+  // так делается только тогда когда объект используется только на месте
+
+  new MenuCard(
+    "img/tabs/elite.jpg",
+    "elite",
+    'Меню "Премиум"',
+    'В меню "Премиум" мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!',
+    21,
+    '.menu .container'
+  ).render(); 
+
+
+  new MenuCard(
+    "img/tabs/post.jpg",
+    "post",
+    'Меню "Постное"',
+   'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
+    14,
+    '.menu .container'
+  ).render(); 
+
+  
+
+  
+
 });
