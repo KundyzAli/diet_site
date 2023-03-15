@@ -158,7 +158,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
    });
 
-  //  const modalTimerId = setTimeout(openModal, 5000);// всплытие модального окна через определенный промежуток времени
+   const modalTimerId = setTimeout(openModal, 5000);// всплытие модального окна через определенный промежуток времени
 
    function showModalByScroll() { // всплытие модального окна тогда когда пользователь долистает до конца
     if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight -1) {
@@ -253,7 +253,62 @@ window.addEventListener('DOMContentLoaded', () => {
     '.menu .container',
   ).render(); 
 
-  
+
+  // forms
+  // реализация скрипта отправки данных на сервер  
+  const forms = document.querySelectorAll('form');
+  //получаем все формы со страницы
+
+  const message = { // сообщения кот-е будет получать пользователь после отправки формы
+    loading: 'Загрузка',
+    success: 'Спасибо! Скоро мы с вами свяжемся',
+    failure: 'Что-то пошло не так...'
+  };
+
+  forms.forEach(item => { // под каждую форму подвязываем ф-ю postData
+    postData(item);
+  });
+
+  function postData(form) { //ф-я кот-ая будет заниматьс постингом на сервер
+    form.addEventListener('submit', (e) => {
+      e.preventDefault(); // отменяем стандартное поведение браузера - перезагрузку страницы
+
+      //создание динамического блока кот-й будет транслировать сообщение для пользователя
+      const statusMessage = document.createElement('div'); //создаем блок 
+      statusMessage.classList.add('status'); 
+      statusMessage.textContent = message.loading; //передаем сообщение что загрузка началась 
+      form.append(statusMessage); // добавляем к форме сообщение выше
+
+      const request = new XMLHttpRequest(); // создаем request
+      request.open('POST', 'server.php'); //request.open - вызываем метод open, в скобках передаем метод POST, и тот путь на кот-й мы будем ссылаться
+      
+      request.setRequestHeader('Content-type', 'application/json'); // передаем информацию на сервер, о том что мы будем отправялять  
+      const formData = new FormData(form);
+
+      const object = {};
+      formData.forEach(function(value, key) {
+        object[key] = value;
+      });
+
+      const json = JSON.stringify(object);
+
+      request.send(json);
+
+      request.addEventListener('load', () => {
+        if (request.status === 200) {
+          console.log(request.response);
+          statusMessage.textContent = message.success; //передаем сообщение что данны отправлены если все ок
+          
+          form.reset(); // сбрасываем введенные данные после успешной отправки
+          setTimeout(() => { // удалит сообщение-оповещение через 2 секунды как он появится
+            statusMessage.remove();
+          }, 2000);
+        } else {
+          statusMessage.textContent = message.failure; //если произошла ошибка оповещаем пользователя об этом
+        }
+      });
+    });
+  }
 
   
 
