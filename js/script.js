@@ -117,37 +117,33 @@ window.addEventListener('DOMContentLoaded', () => {
   // modal
 
   const modalTrigger = document.querySelectorAll('[data-modal]'),
-        modalCloseBtn = document.querySelector('[data-close]'),
         modal = document.querySelector('.modal');
 
 
+  modalTrigger.forEach(btn => {
+    btn.addEventListener('click', openModal)
+  });
+
+  function closeModal() {
+    modal.classList.add('hide');
+    modal.classList.remove('show');
+     // вариант с toggle
+    // modal.classList.toggle('show');
+    document.body.style.overflow = ''; // тут отменяем, чтобы скрол снова заработал 
+  }
+
   function openModal() {
-  // modal.classList.add('show');
-  // modal.classList.remove('hide');
-  // вариант с toggle
-    modal.classList.toggle('show');
+    modal.classList.add('show');
+    modal.classList.remove('hide');
+    // вариант с toggle
+    // modal.classList.toggle('show');
     document.body.style.overflow = 'hidden'; // чтобы при открытом модальном окне, скрол стр не работал
     clearInterval(modalTimerId);
   }   
 
   
-  modalTrigger.forEach(btn => {
-    btn.addEventListener('click', openModal)
-  });
-
-
-  function closeModal() {
-    // modal.classList.add('hide');
-  // modal.classList.remove('show');
-  // вариант с toggle
-    modal.classList.toggle('show');
-    document.body.style.overflow = ''; // тут отменяем, чтобы скрол снова заработал 
-  }
-  
-  modalCloseBtn.addEventListener('click', closeModal); 
-
   modal.addEventListener('click', (e) => { // закрытие модального окна если кликнули на подложку
-    if (e.target === modal) {
+    if (e.target === modal || e.target.getAttribute('data-close') == '') {
       closeModal();
     }
   });
@@ -158,7 +154,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
    });
 
-   const modalTimerId = setTimeout(openModal, 5000);// всплытие модального окна через определенный промежуток времени
+   const modalTimerId = setTimeout(openModal, 50000);// всплытие модального окна через определенный промежуток времени
 
    function showModalByScroll() { // всплытие модального окна тогда когда пользователь долистает до конца
     if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight -1) {
@@ -170,8 +166,7 @@ window.addEventListener('DOMContentLoaded', () => {
    window.addEventListener('scroll', showModalByScroll);
 
 
-
-   //используем классы для карточек
+   //используем классы для карточек меню
 
    class MenuCard {
     constructor(src, alt, title, descr, price, parentSelector, ...classes) {
@@ -185,6 +180,7 @@ window.addEventListener('DOMContentLoaded', () => {
       this.transfer = 27;
       this.changeToUAH(); // метод  changeToUAH можем вызывать в методе кот-й будет что-то помещать на страницу либо прямо в конструкторе
     }
+
     // в будущей базе данных если цена записывается в $ ее надо конвертировать в местную валюту 
     changeToUAH() { //метод конвертации валют
       this.price = this.price * this.transfer;
@@ -194,9 +190,10 @@ window.addEventListener('DOMContentLoaded', () => {
       // метод  changeToUAH можем вызывать в методе кот-й будет что-то помещать на страницу либо прямо в конструкторе
       //создаем эл-т поместим в нее верстку, эту верстку дополним теми данными кот-е приходят,как аргументы и поместить этот эл-т уже на страницу
       const element = document.createElement('div');
+      
       if (this.classes.length === 0 ) {
-        this.element = 'menu__item';
-        element.classList.add(this.element);
+        this.classes = 'menu__item';
+        element.classList.add(this.classes);
       } else {
         this.classes.forEach(className => element.classList.add(className));
       }
@@ -258,9 +255,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // реализация скрипта отправки данных на сервер  
   const forms = document.querySelectorAll('form');
   //получаем все формы со страницы
-
   const message = { // сообщения кот-е будет получать пользователь после отправки формы
-    loading: 'Загрузка',
+    loading: 'img/form/spinner.svg',
     success: 'Спасибо! Скоро мы с вами свяжемся',
     failure: 'Что-то пошло не так...'
   };
@@ -274,22 +270,23 @@ window.addEventListener('DOMContentLoaded', () => {
       e.preventDefault(); // отменяем стандартное поведение браузера - перезагрузку страницы
 
       //создание динамического блока кот-й будет транслировать сообщение для пользователя
-      const statusMessage = document.createElement('div'); //создаем блок 
-      statusMessage.classList.add('status'); 
-      statusMessage.textContent = message.loading; //передаем сообщение что загрузка началась 
-      form.append(statusMessage); // добавляем к форме сообщение выше
+      let statusMessage = document.createElement('img'); //создаем блок 
+      statusMessage.src = message.loading; 
+      statusMessage.style.cssText = `
+        display: block;
+        margin: 0 auto;
+      `;
+      form.insertAdjacentElement('afterend', statusMessage);
 
       const request = new XMLHttpRequest(); // создаем request
-      request.open('POST', 'server.php'); //request.open - вызываем метод open, в скобках передаем метод POST, и тот путь на кот-й мы будем ссылаться
-      
-      request.setRequestHeader('Content-type', 'application/json'); // передаем информацию на сервер, о том что мы будем отправялять  
+      request.open('POST', 'server.php'); //request.open - вызываем метод open, в скобках передаем метод POST, и тот путь на кот-й мы будем ссылаться 
+      request.setRequestHeader('Content-type', 'application/json; charset=utf-8'); // передаем информацию на сервер, о том что мы будем отправялять  
       const formData = new FormData(form);
 
       const object = {};
       formData.forEach(function(value, key) {
         object[key] = value;
       });
-
       const json = JSON.stringify(object);
 
       request.send(json);
@@ -297,19 +294,39 @@ window.addEventListener('DOMContentLoaded', () => {
       request.addEventListener('load', () => {
         if (request.status === 200) {
           console.log(request.response);
-          statusMessage.textContent = message.success; //передаем сообщение что данны отправлены если все ок
-          
-          form.reset(); // сбрасываем введенные данные после успешной отправки
-          setTimeout(() => { // удалит сообщение-оповещение через 2 секунды как он появится
-            statusMessage.remove();
-          }, 2000);
+          showThanksModal(message.success); //передаем сообщение что данны отправлены если все ок     
+          statusMessage.remove();
+          form.reset(); // сбрасываем введенные данные после успешной отправки    
         } else {
-          statusMessage.textContent = message.failure; //если произошла ошибка оповещаем пользователя об этом
+          showThanksModal(message.failure); //если произошла ошибка оповещаем пользователя об этом
         }
       });
     });
   }
 
   
+  function showThanksModal(message) {
+    const prevModalDialog = document.querySelector('.modal__dialog');
 
+    prevModalDialog.classList.add('hide');
+    openModal();
+
+    const thanksModal = document.createElement('div');
+    thanksModal.classList.add('modal__dialog');
+    thanksModal.innerHTML = `
+      <div class="modal__content">
+        <div class="modal__close" data-close>×</div>
+        <div class="modal__title">${message}</div>
+      </div>
+    `;
+
+    //чтобы после отправки формы, модальное окно появлялось вновь
+    document.querySelector('.modal').append(thanksModal);
+    setTimeout(() => {
+      thanksModal.remove();
+      prevModalDialog.classList.add('show');
+      prevModalDialog.classList.remove('hide');
+      closeModal();
+    }, 4000);
+  }
 });
