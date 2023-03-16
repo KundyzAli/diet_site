@@ -277,30 +277,31 @@ window.addEventListener('DOMContentLoaded', () => {
         margin: 0 auto;
       `;
       form.insertAdjacentElement('afterend', statusMessage);
-
-      const request = new XMLHttpRequest(); // создаем request
-      request.open('POST', 'server.php'); //request.open - вызываем метод open, в скобках передаем метод POST, и тот путь на кот-й мы будем ссылаться 
-      request.setRequestHeader('Content-type', 'application/json; charset=utf-8'); // передаем информацию на сервер, о том что мы будем отправялять  
+ 
       const formData = new FormData(form);
 
       const object = {};
       formData.forEach(function(value, key) {
         object[key] = value;
       });
-      const json = JSON.stringify(object);
 
-      request.send(json);
-
-      request.addEventListener('load', () => {
-        if (request.status === 200) {
-          console.log(request.response);
+      fetch('server1.php', {
+        method: 'POST',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify(object)
+      })
+      .then(data => data.text())
+      .then(data => {
+          console.log(data); // data - это данные кот-е возвращаются из промиса, те кот-е нам вернул сервер
           showThanksModal(message.success); //передаем сообщение что данны отправлены если все ок     
-          statusMessage.remove();
-          form.reset(); // сбрасываем введенные данные после успешной отправки    
-        } else {
-          showThanksModal(message.failure); //если произошла ошибка оповещаем пользователя об этом
-        }
-      });
+          statusMessage.remove();  
+      }).catch(() => {
+          showThanksModal(message.failure); //если на этапе запроса fetch произойдет ошибка, то вызовется эта ф-я
+      }).finally(() => {
+          form.reset(); // сбрасываем введенные данные вне зависимости от успеха или провала запроса данных
+      })
     });
   }
 
@@ -329,4 +330,6 @@ window.addEventListener('DOMContentLoaded', () => {
       closeModal();
     }, 4000);
   }
+
+
 });
