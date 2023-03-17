@@ -154,7 +154,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
    });
 
-   const modalTimerId = setTimeout(openModal, 50000);// всплытие модального окна через определенный промежуток времени
+   const modalTimerId = setTimeout(openModal, 5000);// всплытие модального окна через определенный промежуток времени
 
    function showModalByScroll() { // всплытие модального окна тогда когда пользователь долистает до конца
     if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight -1) {
@@ -214,42 +214,62 @@ window.addEventListener('DOMContentLoaded', () => {
     }
    }
 
-  //  #1
-  //  const div = new MenuCard();
-  //  div.render();
+   const getResource = async (url) => { //получаем данные с сервера 
+    const res = await fetch(url);
+    // fetch если сталкивается с ошибкой он не выдаст catch, не выдаст reject, в таком случае нам нужно вручную настроить
+    if (!res.ok) {
+    // если res не ok  
+        throw new Error(`Could not fetch ${url}, status: ${res.status}`);//создаем и выкидываем ошибку
+                      //получим url по кот-му не смогли обратится, и статус кот-й там был                
+      }
 
-  // #2
-  new MenuCard(
-    "img/tabs/vegy.jpg",
-    "vegy",
-    'Меню "Фитнес"',
-    'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
-    9,
-    '.menu .container',
-  ).render(); 
-  //здесь создаем нов. объект и сразу же вызываем на нем метод render(он что-то отработает, и исчезнет)
-  // объект может сущ. и без переменной, можем ее никуда не ложить.
-  // так делается только тогда когда объект используется только на месте
+      return await res.json();
+    };
 
-  new MenuCard(
-    "img/tabs/elite.jpg",
-    "elite",
-    'Меню "Премиум"',
-    'В меню "Премиум" мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!',
-    21,
-    '.menu .container',
-  ).render(); 
+  //   getResource('http://localhost:3000/menu')
+  // //вызываем ф-ю и в url записываем тот адрес по кот-му сайтр открыт в хосте
+  //     .then(data => { //обрабатываем данные
+  //       data.forEach(({img, altimg, title, descr, price}) => { //т.к.данные это массив, перебираем каждый методом forEach
+  //         new MenuCard(img, altimg, title, descr, price, '.menu .container').render(); //вызываем конструктор MenuCard, 
+  //         // он будет создаваться столько сколько объектов внутри массива, кот-й придет из сервера
+  //       });
+  //   });
 
+  axios.get('http://localhost:3000/menu')
+    .then(data => {
+      data.data.forEach(({img, altimg, title, descr, price}) => { //т.к.данные это массив, перебираем каждый методом forEach
+        new MenuCard(img, altimg, title, descr, price, '.menu .container').render(); //вызываем конструктор MenuCard, 
+          // он будет создаваться столько сколько объектов внутри массива, кот-й придет из сервера
+        });
+    });
 
-  new MenuCard(
-    "img/tabs/post.jpg",
-    "post",
-    'Меню "Постное"',
-   'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
-    14,
-    '.menu .container',
-  ).render(); 
+  // getResource('http://localhost:3000/menu')
+  //   .then(data => createCard(data));
 
+  // function createCard(data) {
+  //   data.forEach(({img, altimg, title, descr, price}) => { // деструктуризация объекта на отдельные св-ва
+  //     const element = document.createElement('div'); // cоздает новый div
+  //     let priceUSd = price * 27
+  //     element.classList.add('menu__item'); // помещает внутрь него новый класс
+
+  //     // формирует верстку карточки, во внутрь помещает св-ва кот-е пришли сервера путем деструктуризации
+  //     element.innerHTML = ` 
+  //       <img src=${img} alt=${altimg}>
+  //       <h3 class="menu__item-subtitle">${title}</h3>
+  //       <div class="menu__item-descr">${descr}</div>
+  //       <div class="menu__item-divider"></div>
+  //       <div class="menu__item-price">
+  //           <div class="menu__item-cost">Цена:</div>
+  //           <div class="menu__item-total"><span>${priceUSd}</span> грн/день</div>
+  //       </div>
+  //     `;
+
+  //     document.querySelector('.menu .container').append(element);
+  //     // добавляет карточку в указанное место
+  //   });
+  // }  
+
+  
 
   // forms
   // реализация скрипта отправки данных на сервер  
@@ -262,10 +282,24 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   forms.forEach(item => { // под каждую форму подвязываем ф-ю postData
-    postData(item);
+    bindPostData(item);
   });
 
-  function postData(form) { //ф-я кот-ая будет заниматьс постингом на сервер
+  const postData = async (url, data) => { //постинг данных на сервер, 
+    // postData - занимается настройка запроса, фетчит, т.е.посылает на сервер, получает
+    // ответ от сервера, и трансформирует этот ответ в json
+    const res = await fetch(url, {
+         method: 'POST',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: data
+    });
+
+    return await res.json();
+  }; 
+
+  function bindPostData(form) { //ф-я кот-ая занимается привязкой постинга
     form.addEventListener('submit', (e) => {
       e.preventDefault(); // отменяем стандартное поведение браузера - перезагрузку страницы
 
@@ -280,19 +314,11 @@ window.addEventListener('DOMContentLoaded', () => {
  
       const formData = new FormData(form);
 
-      const object = {};
-      formData.forEach(function(value, key) {
-        object[key] = value;
-      });
+      const json = JSON.stringify(Object.fromEntries(formData.entries()));
+      // formData превратили в массив массивов при помощи entries, далее трансформировали его в обычный объект Object.fromEntries,
+      // и при помощи JSON.stringify  классический объект превратили в json и положили в переменную json
 
-      fetch('server1.php', {
-        method: 'POST',
-        headers: {
-          'Content-type': 'application/json'
-        },
-        body: JSON.stringify(object)
-      })
-      .then(data => data.text())
+      postData('http://localhost:3000/requests', json)
       .then(data => {
           console.log(data); // data - это данные кот-е возвращаются из промиса, те кот-е нам вернул сервер
           showThanksModal(message.success); //передаем сообщение что данны отправлены если все ок     
@@ -331,5 +357,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 4000);
   }
 
+  fetch('http://localhost:3000/menu')
+  .then(data => data.json())
+  .then(res => console.log(res));
 
-});
+
+})
